@@ -1,25 +1,105 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reigns Clone</title>
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Anlık Mesajlaşma</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-    <div id="game-container">
-        <div id="card">
-            <h2 id="card-title">Kart Başlığı</h2>
-            <p id="card-text">Bu bir karttır. Bu bir karttır. Bu bir karttır. Bu bir karttır.</p>
-            <div id="options">
-                <button id="option1">Seçenek 1</button>
-                <button id="option2">Seçenek 2</button>
-                <button id="option3">Seçenek 3</button>
-                <button id="option4">Seçenek 4</button>
-            </div>
-        </div>
-    </div>
+  <div class="login-container" id="loginContainer">
+    <h2>Giriş / Kayıt</h2>
+    <input type="text" id="username" placeholder="Kullanıcı Adı" />
+    <input type="password" id="password" placeholder="Şifre" />
+    <button onclick="login()">Giriş / Kayıt Ol</button>
+    <p id="loginStatus"></p>
+  </div>
 
-    <script src="script.js"></script>
+  <div class="chat-container" id="chatContainer" style="display: none;">
+    <div class="sidebar">
+      <input type="text" id="searchUser" placeholder="Kullanıcı Ara" oninput="searchUsers()" />
+      <ul id="userList"></ul>
+    </div>
+    <div class="chat-box">
+      <div id="chatMessages"></div>
+      <input type="text" id="messageInput" placeholder="Mesaj yaz..." onkeypress="sendOnEnter(event)" />
+      <button onclick="sendMessage()">Gönder</button>
+    </div>
+  </div>
+
+  <script>
+    let currentUser = null;
+    let currentChatUser = null;
+    const users = JSON.parse(localStorage.getItem("users") || '{}');
+
+    function login() {
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value;
+
+      if (!username || !password) return;
+
+      if (users[username] && users[username] !== password) {
+        document.getElementById("loginStatus").textContent = "Şifre yanlış.";
+        return;
+      }
+
+      users[username] = password;
+      localStorage.setItem("users", JSON.stringify(users));
+      currentUser = username;
+      document.getElementById("loginContainer").style.display = "none";
+      document.getElementById("chatContainer").style.display = "flex";
+      updateUserList();
+    }
+
+    function updateUserList() {
+      const list = document.getElementById("userList");
+      list.innerHTML = "";
+      Object.keys(users).forEach(user => {
+        if (user !== currentUser) {
+          const li = document.createElement("li");
+          li.textContent = user;
+          li.onclick = () => openChat(user);
+          list.appendChild(li);
+        }
+      });
+    }
+
+    function searchUsers() {
+      const query = document.getElementById("searchUser").value.toLowerCase();
+      const list = document.getElementById("userList");
+      list.innerHTML = "";
+      Object.keys(users).forEach(user => {
+        if (user !== currentUser && user.toLowerCase().includes(query)) {
+          const li = document.createElement("li");
+          li.textContent = user;
+          li.onclick = () => openChat(user);
+          list.appendChild(li);
+        }
+      });
+    }
+
+    function openChat(user) {
+      currentChatUser = user;
+      document.getElementById("chatMessages").innerHTML = "<p>" + user + " ile sohbet başlatıldı.</p>";
+    }
+
+    function sendMessage() {
+      const input = document.getElementById("messageInput");
+      const msg = input.value.trim();
+      if (!msg || !currentChatUser) return;
+
+      const messagesDiv = document.getElementById("chatMessages");
+      const msgEl = document.createElement("div");
+      msgEl.className = "message self";
+      msgEl.textContent = msg;
+      messagesDiv.appendChild(msgEl);
+      input.value = "";
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    function sendOnEnter(event) {
+      if (event.key === "Enter") sendMessage();
+    }
+  </script>
 </body>
 </html>
