@@ -1,36 +1,37 @@
 const express = require('express');
+const mongoose = require('mongoose');
+const socketIo = require('socket.io');
+const http = require('http');
 const app = express();
-const http = require('http').createServer(app);
-const io = require('socket.io')(http);
-const path = require('path');
+const server = http.createServer(app);
+const io = socketIo(server);
 
-app.use(express.static(path.join(__dirname, 'public')));
+// MongoDB bağlantı URI'niz
+const mongoURI = 'mongodb+srv://onur2442:onur2442@chatapp.cvshkxd.mongodb.net/?retryWrites=true&w=majority&appName=chatapp';
 
-let onlineUsers = {};
+// MongoDB'ye bağlan
+mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => {
+    console.log('MongoDB Connected!');
+  })
+  .catch((err) => {
+    console.log('MongoDB connection error: ', err);
+  });
 
+app.get('/', (req, res) => {
+  res.send('MongoDB ile Bağlantı Başarıyla Kuruldu!');
+});
+
+// WebSocket bağlantısı (Socket.IO)
 io.on('connection', (socket) => {
-  socket.on('login', (username) => {
-    socket.username = username;
-    onlineUsers[username] = socket.id;
-    io.emit('userList', Object.keys(onlineUsers));
-  });
-
-  socket.on('message', ({ to, message }) => {
-    const targetSocketId = onlineUsers[to];
-    if (targetSocketId) {
-      io.to(targetSocketId).emit('message', {
-        from: socket.username,
-        message,
-      });
-    }
-  });
-
+  console.log('A user connected');
+  
   socket.on('disconnect', () => {
-    delete onlineUsers[socket.username];
-    io.emit('userList', Object.keys(onlineUsers));
+    console.log('User disconnected');
   });
 });
 
-http.listen(3000, () => {
-  console.log('Sunucu 3000 portunda çalışıyor.');
+const port = 3000;
+server.listen(port, () => {
+  console.log(`Server running on http://localhost:${port}`);
 });
