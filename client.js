@@ -51,3 +51,6 @@ function addMessage(sender, msg) {
   div.textContent = `${sender}: ${msg}`;
   document.getElementById('chatMessages').appendChild(div);
 }
+const socket = io(); // Socket.io bağlantısı
+let currentUser = '';
+let currentChatUser = '';
